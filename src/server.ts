@@ -35,6 +35,24 @@ app.use(
   }),
 );
 
+// Add this to proxy API requests to your Render Backend
+app.use('/accounts', (req, res) => {
+  const targetUrl = 'https://backend-ttbu.onrender.com' + req.originalUrl;
+  
+  // Use 'fetch' or 'http-proxy-middleware' to forward the request
+  fetch(targetUrl, {
+    method: req.method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cookie': req.headers.cookie || '' // Pass cookies for auth
+    },
+    body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined
+  })
+  .then(response => response.json())
+  .then(data => res.json(data))
+  .catch(err => res.status(500).json({ error: 'Proxy failed', details: err }));
+});
+
 /**
  * Handle all other requests by rendering the Angular application.
  */
