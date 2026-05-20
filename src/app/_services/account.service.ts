@@ -10,13 +10,14 @@ const baseUrl = `${environment.apiUrl}/accounts`;
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
+    private refreshTokenTimeout?: any;
     private accountSubject: BehaviorSubject<Account | null>;
     public account: Observable<Account | null>;
+    private stopRefreshTokenTimer() {
+        clearTimeout(this.refreshTokenTimeout);
+    }
 
-    constructor(
-        private router: Router,
-        private http: HttpClient
-    ) {
+    constructor(private router: Router, private http: HttpClient) {
         this.accountSubject = new BehaviorSubject<Account | null>(null);
         this.account = this.accountSubject.asObservable();
     }
@@ -71,6 +72,8 @@ export class AccountService {
         const timeout = expires.getTime() - Date.now() - (60 * 1000);
         this.refreshTokenTimeout = setTimeout(() => this.refreshToken().subscribe(), timeout);
     }
+
+    
 
     // ... (Keep existing methods: stopRefreshTokenTimer, getAll, getById, etc.)
 }
