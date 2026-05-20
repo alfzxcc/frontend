@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "rootDir": "src",
+    "types": [],
+    "noPropertyAccessFromIndexSignature": false
+  },
+  "files": [
+    "src/main.ts",
+    "src/main.server.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.ts"
+  ]
+}

@@ -1,0 +1,32 @@
+<div class="card m-3" style="max-width: 450px; margin: 50px auto !important;">
+  <div class="card-body text-center p-5">
+    
+    <div *ngIf="tokenStatus === 'verifying'">
+      <div class="spinner-border text-primary mb-3" role="status"></div>
+      <h4>Verifying Account...</h4>
+      <p class="text-muted">Validating your security token token with SmartSync servers.</p>
+    </div>
+
+    <div *ngIf="tokenStatus === 'success'">
+      <div class="text-success mb-3" style="font-size: 3rem;">✓</div>
+      <h4 class="text-success">Verification Complete!</h4>
+      <p>Your account is now active. Redirecting you to the login screen layout...</p>
+    </div>
+
+    <div *ngIf="tokenStatus === 'failed'">
+      <div class="text-danger mb-3" style="font-size: 3rem;">⚠️</div>
+      <h4 class="text-danger">Verification Failed</h4>
+      <p class="text-muted mb-4">The link or verification token string is invalid or expired.</p>
+      
+      <hr />
+      <div class="form-group mt-3">
+        <label class="small font-weight-bold">Have a manual token code?</label>
+        <input type="text" #manualToken class="form-control text-center my-2 font-monospace" placeholder="Paste hex token string here">
+        <button class="btn btn-primary btn-sm btn-block mt-2" (click)="tokenStatus = 'verifying'; accountService.verifyEmail(manualToken.value).subscribe()">
+          Submit Token Code
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

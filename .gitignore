@@ -1,0 +1,11 @@
+# Node
+node_modules/
+dist/
+.angular/
+
+# Environment (do NOT commit production secrets)
+src/environments/environment.prod.ts
+
+# Misc
+.DS_Store
+*.log
