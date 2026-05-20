@@ -9,3 +9,5 @@ src/environments/environment.prod.ts
 # Misc
 .DS_Store
 *.log
+
+.vercel
