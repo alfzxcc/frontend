@@ -15,8 +15,9 @@ export class AccountService {
     public account: Observable<Account | null>;
 
     constructor(private router: Router, private http: HttpClient) {
-        this.accountSubject = new BehaviorSubject<Account | null>(null);
-        this.account = this.accountSubject.asObservable();
+    // This is crucial: populate the value from local storage
+    this.accountSubject = new BehaviorSubject(JSON.parse(localStorage.getItem('user') || 'null'));
+    this.account = this.accountSubject.asObservable();
     }
 
     public get accountValue() { return this.accountSubject.value; }

@@ -16,6 +16,7 @@ export class AuthGuard implements CanActivate {
     }
 
     const account = this.accountService.accountValue;
+    console.log("AuthGuard: Current account value:", account);
     if (account) {
       // 2. Check for role authorization
       if (route.data['roles'] && !route.data['roles'].includes(account.role)) {
