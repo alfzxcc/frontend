@@ -19,13 +19,9 @@ export class AccountService {
         this.account = this.accountSubject.asObservable();
     }
 
-    public get accountValue() {
-        return this.accountSubject.value;
-    }
+    public get accountValue() { return this.accountSubject.value; }
 
-    private get httpOptions() {
-        return { withCredentials: true };
-    }
+    private get httpOptions() { return { withCredentials: true }; }
 
     login(email: string, password: string) {
         return this.http.post<any>(`${baseUrl}/authenticate`, { email, password }, this.httpOptions)
@@ -52,69 +48,23 @@ export class AccountService {
             }));
     }
 
-    register(account: Account) {
-        return this.http.post(`${baseUrl}/register`, account, this.httpOptions);
-    }
-
-    verifyEmail(token: string): Observable<any> {
-        return this.http.post(`${baseUrl}/verify-email`, { token }, this.httpOptions);
-    }
-
-    forgotPassword(email: string) {
-        return this.http.post(`${baseUrl}/forgot-password`, { email }, this.httpOptions);
-    }
-
-    validateResetToken(token: string) {
-        return this.http.post(`${baseUrl}/validate-reset-token`, { token }, this.httpOptions);
-    }
-
-    resetPassword(token: string, password: string, confirmPassword: string) {
-        return this.http.post(`${baseUrl}/reset-password`, { token, password, confirmPassword }, this.httpOptions);
-    }
-
-    getAll() {
-        return this.http.get<Account[]>(baseUrl, this.httpOptions);
-    }
-
-    getById(id: string) {
-        return this.http.get<Account>(`${baseUrl}/${id}`, this.httpOptions);
-    }
-
-    create(params: any) {
-        return this.http.post(baseUrl, params, this.httpOptions);
-    }
-
-    update(id: string, params: any) {
-        return this.http.put(`${baseUrl}/${id}`, params, this.httpOptions)
-            .pipe(map((account: any) => {
-                if (account.id === this.accountValue?.id) {
-                    account = { ...this.accountValue, ...account };
-                    this.accountSubject.next(account);
-                }
-                return account;
-            }));
-    }
-
-    delete(id: string) {
-        return this.http.delete(`${baseUrl}/${id}`, this.httpOptions)
-            .pipe(finalize(() => {
-                if (id === this.accountValue?.id) {
-                    this.logout();
-                }
-            }));
-    }
+    register(account: Account) { return this.http.post(`${baseUrl}/register`, account, this.httpOptions); }
+    verifyEmail(token: string) { return this.http.post(`${baseUrl}/verify-email`, { token }, this.httpOptions); }
+    forgotPassword(email: string) { return this.http.post(`${baseUrl}/forgot-password`, { email }, this.httpOptions); }
+    validateResetToken(token: string) { return this.http.post(`${baseUrl}/validate-reset-token`, { token }, this.httpOptions); }
+    resetPassword(token: string, password: string, confirmPassword: string) { return this.http.post(`${baseUrl}/reset-password`, { token, password, confirmPassword }, this.httpOptions); }
+    getAll() { return this.http.get<Account[]>(baseUrl, this.httpOptions); }
+    getById(id: string) { return this.http.get<Account>(`${baseUrl}/${id}`, this.httpOptions); }
+    create(params: any) { return this.http.post(baseUrl, params, this.httpOptions); }
+    update(id: string, params: any) { return this.http.put(`${baseUrl}/${id}`, params, this.httpOptions).pipe(map((x: any) => { if (id === this.accountValue?.id) this.accountSubject.next({ ...this.accountValue, ...x }); return x; })); }
+    delete(id: string) { return this.http.delete(`${baseUrl}/${id}`, this.httpOptions).pipe(finalize(() => { if (id === this.accountValue?.id) this.logout(); })); }
 
     private startRefreshTokenTimer() {
         if (!this.accountValue?.jwtToken) return;
-        const jwtBase64 = this.accountValue.jwtToken.split('.')[1];
-        const jwtToken = JSON.parse(atob(jwtBase64));
+        const jwtToken = JSON.parse(atob(this.accountValue.jwtToken.split('.')[1]));
         const expires = new Date(jwtToken.exp * 1000);
-        const timeout = expires.getTime() - Date.now() - (60 * 1000);
-        this.refreshTokenTimeout = setTimeout(() => this.refreshToken().subscribe(), timeout);
+        this.refreshTokenTimeout = setTimeout(() => this.refreshToken().subscribe(), expires.getTime() - Date.now() - (60 * 1000));
     }
 
-    private stopRefreshTokenTimer() {
-        clearTimeout(this.refreshTokenTimeout);
-    }
+    private stopRefreshTokenTimer() { clearTimeout(this.refreshTokenTimeout); }
 }
-
