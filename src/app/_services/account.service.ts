@@ -13,9 +13,6 @@ export class AccountService {
     private refreshTokenTimeout?: any;
     private accountSubject: BehaviorSubject<Account | null>;
     public account: Observable<Account | null>;
-    private stopRefreshTokenTimer() {
-        clearTimeout(this.refreshTokenTimeout);
-    }
 
     constructor(private router: Router, private http: HttpClient) {
         this.accountSubject = new BehaviorSubject<Account | null>(null);
@@ -26,7 +23,6 @@ export class AccountService {
         return this.accountSubject.value;
     }
 
-    // Standardized helper for requests needing cookies
     private get httpOptions() {
         return { withCredentials: true };
     }
@@ -57,12 +53,57 @@ export class AccountService {
             }));
     }
 
-    // Added withCredentials to ensure registration doesn't face CORS blocks
     register(account: Account) {
         return this.http.post(`${baseUrl}/register`, account, this.httpOptions);
     }
 
-    // ... (Keep existing methods: verifyEmail, forgotPassword, etc.)
+    verifyEmail(token: string): Observable<any> {
+        return this.http.post(`${baseUrl}/verify-email`, { token }, this.httpOptions);
+    }
+
+    forgotPassword(email: string) {
+        return this.http.post(`${baseUrl}/forgot-password`, { email }, this.httpOptions);
+    }
+
+    validateResetToken(token: string) {
+        return this.http.post(`${baseUrl}/validate-reset-token`, { token }, this.httpOptions);
+    }
+
+    resetPassword(token: string, password: string, confirmPassword: string) {
+        return this.http.post(`${baseUrl}/reset-password`, { token, password, confirmPassword }, this.httpOptions);
+    }
+
+    getAll() {
+        return this.http.get<Account[]>(baseUrl, this.httpOptions);
+    }
+
+    getById(id: string) {
+        return this.http.get<Account>(`${baseUrl}/${id}`, this.httpOptions);
+    }
+
+    create(params: any) {
+        return this.http.post(baseUrl, params, this.httpOptions);
+    }
+
+    update(id: string, params: any) {
+        return this.http.put(`${baseUrl}/${id}`, params, this.httpOptions)
+            .pipe(map((account: any) => {
+                if (account.id === this.accountValue?.id) {
+                    account = { ...this.accountValue, ...account };
+                    this.accountSubject.next(account);
+                }
+                return account;
+            }));
+    }
+
+    delete(id: string) {
+        return this.http.delete(`${baseUrl}/${id}`, this.httpOptions)
+            .pipe(finalize(() => {
+                if (id === this.accountValue?.id) {
+                    this.logout();
+                }
+            }));
+    }
 
     private startRefreshTokenTimer() {
         if (!this.accountValue?.jwtToken) return;
@@ -73,7 +114,7 @@ export class AccountService {
         this.refreshTokenTimeout = setTimeout(() => this.refreshToken().subscribe(), timeout);
     }
 
-    
-
-    // ... (Keep existing methods: stopRefreshTokenTimer, getAll, getById, etc.)
+    private stopRefreshTokenTimer() {
+        clearTimeout(this.refreshTokenTimeout);
+    }
 }
