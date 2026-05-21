@@ -24,19 +24,20 @@ export class VerifyEmailComponent implements OnInit {
     ngOnInit() {
     const token = this.route.snapshot.queryParams['token'];
     
+    // Explicitly check if token exists
+    if (!token) return;
+
     this.accountService.verifyEmail(token)
         .subscribe({
             next: () => {
-                // Update the status on success
+                // This triggers when the backend returns HTTP 200
                 this.status = 'Thank you! Your account has been activated.';
             },
             error: (err) => {
-                console.log("Full error object:", err); // ADD THIS
-                // Update the status on error
+                // This triggers if the backend returns HTTP 400 (already verified or invalid)
                 this.status = 'Verification failed. The link might be expired or already used.';
+                console.error("Verification error:", err);
             }
         });
-      }
-    
+  }
 }
-
