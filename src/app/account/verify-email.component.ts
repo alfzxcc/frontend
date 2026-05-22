@@ -5,16 +5,18 @@ import { AccountService } from '@app/_services'; // Ensure this path matches you
 @Component({ 
     selector: 'app-verify-email',
     template: `
-        <div class="text-center">
+        <div class="text-center mt-5">
             <h3>Verify Email</h3>
+            <div *ngIf="loading" class="spinner-border text-primary my-3"></div>
             <p>{{ status }}</p>
-            <a *ngIf="status !== 'Verifying...'" routerLink="/account/login" class="btn btn-primary">Go to Login</a>
+            <a *ngIf="!loading" routerLink="/account/login" class="btn btn-primary mt-2">Go to Login</a>
         </div>
     `,
     standalone: false
 })
 export class VerifyEmailComponent implements OnInit {
-    status = 'Verifying...';
+    status = '';
+    loading = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -22,22 +24,27 @@ export class VerifyEmailComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-    const token = this.route.snapshot.queryParams['token'];
-    
-    // Explicitly check if token exists
-    if (!token) return;
+        const token = this.route.snapshot.queryParams['token'];
 
-    this.accountService.verifyEmail(token)
-        .subscribe({
-            next: () => {
-                // This triggers when the backend returns HTTP 200
-                this.status = 'Thank you! Your account has been activated.';
-            },
-            error: (err) => {
-                // This triggers if the backend returns HTTP 400 (already verified or invalid)
-                this.status = 'Verification failed. The link might be expired or already used.';
-                console.error("Verification error:", err);
-            }
-        });
-  }
+        if (!token) {
+            this.status = 'Verification link is invalid or missing a token.';
+            return;
+        }
+
+        this.loading = true;
+        this.status = 'Verifying your email, please wait...';
+
+        this.accountService.verifyEmail(token)
+            .subscribe({
+                next: () => {
+                    this.loading = false;
+                    this.status = 'Your email has been verified! You can now log in.';
+                },
+                error: (err) => {
+                    this.loading = false;
+                    this.status = 'Verification failed. The link may be expired or already used.';
+                    console.error('Verification error:', err);
+                }
+            });
+    }
 }

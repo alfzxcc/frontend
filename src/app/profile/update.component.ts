@@ -30,6 +30,11 @@ export class UpdateComponent implements OnInit {
   ngOnInit() {
     this.account = this.accountService.accountValue!;
 
+    if (!this.account) {
+      this.router.navigate(['/account/login']);
+      return;
+    }
+
     this.form = this.formBuilder.group({
       title: [this.account.title, Validators.required],
       firstName: [this.account.firstName, Validators.required],

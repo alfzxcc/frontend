@@ -27,6 +27,7 @@ export class AccountService {
     login(email: string, password: string) {
         return this.http.post<any>(`${baseUrl}/authenticate`, { email, password }, this.httpOptions)
             .pipe(map(account => {
+                localStorage.setItem('user', JSON.stringify(account));
                 this.accountSubject.next(account);
                 this.startRefreshTokenTimer();
                 return account;
@@ -36,6 +37,7 @@ export class AccountService {
     logout() {
         this.http.post<any>(`${baseUrl}/revoke-token`, {}, this.httpOptions).subscribe();
         this.stopRefreshTokenTimer();
+        localStorage.removeItem('user');
         this.accountSubject.next(null);
         this.router.navigate(['/account/login']);
     }
@@ -43,6 +45,7 @@ export class AccountService {
     refreshToken() {
         return this.http.post<any>(`${baseUrl}/refresh-token`, {}, this.httpOptions)
             .pipe(map((account) => {
+                localStorage.setItem('user', JSON.stringify(account));
                 this.accountSubject.next(account);
                 this.startRefreshTokenTimer();
                 return account;
