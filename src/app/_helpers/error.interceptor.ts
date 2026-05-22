@@ -19,15 +19,27 @@ export class ErrorInterceptor implements HttpInterceptor {
         const isRevokeToken = request.url.includes('revoke-token');
         const isRefreshToken = request.url.includes('refresh-token');
 
-        // Silently ignore 401s from revoke-token and refresh-token —
-        // these fire on page load when no session exists and must NOT
-        // show "Unauthorized" to the user or trigger a logout
+        // Silently ignore 401s from background token calls on page load
         if (isRevokeToken || isRefreshToken) {
           return EMPTY;
         }
 
-        if ([401, 403].includes(err.status) && this.accountService.accountValue) {
-          this.accountService.logout();
+        // Only auto-logout on 401 if it's NOT an admin/profile API call
+        // For those, just show the error without logging out
+        if (err.status === 401) {
+          const isApiDataCall = request.url.includes('/accounts') &&
+            (request.method === 'GET' || request.method === 'PUT');
+
+          if (isApiDataCall) {
+            // Don't logout — just surface the error message
+            const error = (err && err.error && err.error.message) || 'Unauthorized';
+            return throwError(() => error);
+          }
+
+          // For other 401s (e.g. expired session), logout
+          if (this.accountService.accountValue) {
+            this.accountService.logout();
+          }
         }
 
         const error =
