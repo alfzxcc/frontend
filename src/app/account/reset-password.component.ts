@@ -19,6 +19,7 @@ export class ResetPasswordComponent implements OnInit {
     form!: FormGroup;
     loading = false;
     submitted = false;
+    private validated = false;
 
     constructor(
         private formBuilder: FormBuilder,
@@ -36,26 +37,42 @@ export class ResetPasswordComponent implements OnInit {
             validator: MustMatch('password', 'confirmPassword')
         });
 
-        // Use queryParamMap observable to avoid race condition with APP_INITIALIZER
-        this.route.queryParamMap.pipe(first()).subscribe(params => {
-            const token = params.get('token');
-            if (!token) {
-                this.tokenStatus = TokenStatus.Invalid;
-                return;
-            }
-            this.accountService.validateResetToken(token)
-                .pipe(first())
-                .subscribe({
-                    next: () => {
-                        this.token = token;
-                        this.tokenStatus = TokenStatus.Valid;
-                        this.router.navigate([], { relativeTo: this.route, replaceUrl: true });
-                    },
-                    error: () => {
-                        this.tokenStatus = TokenStatus.Invalid;
-                    }
-                });
-        });
+        // Guard against re-running on router.navigate([]) calls
+        if (this.validated) return;
+        this.validated = true;
+
+        // Read token from URL snapshot first, fall back to observable
+        const snapshotToken = this.route.snapshot.queryParams['token'];
+        if (snapshotToken) {
+            this.validateToken(snapshotToken);
+        } else {
+            // Fall back to observable for hash routing edge cases
+            this.route.queryParamMap.pipe(first()).subscribe(params => {
+                const token = params.get('token');
+                if (!token) {
+                    this.tokenStatus = TokenStatus.Invalid;
+                    return;
+                }
+                this.validateToken(token);
+            });
+        }
+    }
+
+    private validateToken(token: string) {
+        // Store token immediately before any async calls
+        this.token = token;
+        this.accountService.validateResetToken(token)
+            .pipe(first())
+            .subscribe({
+                next: () => {
+                    this.tokenStatus = TokenStatus.Valid;
+                    // DO NOT navigate away - keep token in URL until form submits
+                },
+                error: () => {
+                    this.token = undefined;
+                    this.tokenStatus = TokenStatus.Invalid;
+                }
+            });
     }
 
     get f() { return this.form.controls; }
@@ -64,12 +81,10 @@ export class ResetPasswordComponent implements OnInit {
         this.submitted = true;
         this.alertService.clear();
 
-        if (this.form.invalid) {
-            return;
-        }
+        if (this.form.invalid || !this.token) return;
 
         this.loading = true;
-        this.accountService.resetPassword(this.token!, this.f['password'].value, this.f['confirmPassword'].value)
+        this.accountService.resetPassword(this.token, this.f['password'].value, this.f['confirmPassword'].value)
             .pipe(first())
             .subscribe({
                 next: () => {
