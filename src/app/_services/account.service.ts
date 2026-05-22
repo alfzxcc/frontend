@@ -52,11 +52,11 @@ export class AccountService {
             }));
     }
 
-    register(account: Account) { return this.http.post(`${baseUrl}/register`, account, this.httpOptions); }
-    verifyEmail(token: string) { return this.http.post(`${baseUrl}/verify-email`, { token }, this.httpOptions); }
-    forgotPassword(email: string) { return this.http.post(`${baseUrl}/forgot-password`, { email }, this.httpOptions); }
-    validateResetToken(token: string) { return this.http.post(`${baseUrl}/validate-reset-token`, { token }, this.httpOptions); }
-    resetPassword(token: string, password: string, confirmPassword: string) { return this.http.post(`${baseUrl}/reset-password`, { token, password, confirmPassword }, this.httpOptions); }
+    register(account: Account) { return this.http.post(`${baseUrl}/register`, account); }
+    verifyEmail(token: string) { return this.http.post(`${baseUrl}/verify-email`, { token }); }
+    forgotPassword(email: string) { return this.http.post(`${baseUrl}/forgot-password`, { email }); }
+    validateResetToken(token: string) { return this.http.post(`${baseUrl}/validate-reset-token`, { token }); }
+    resetPassword(token: string, password: string, confirmPassword: string) { return this.http.post(`${baseUrl}/reset-password`, { token, password, confirmPassword }); }
     getAll() { return this.http.get<Account[]>(baseUrl, this.httpOptions); }
     getById(id: string) { return this.http.get<Account>(`${baseUrl}/${id}`, this.httpOptions); }
     create(params: any) { return this.http.post(baseUrl, params, this.httpOptions); }
