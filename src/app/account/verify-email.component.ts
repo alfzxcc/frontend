@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { AccountService } from '@app/_services'; // Ensure this path matches your project structure
+import { AccountService } from '@app/_services';
+import { first } from 'rxjs/operators';
 
 @Component({ 
     selector: 'app-verify-email',
@@ -15,8 +16,8 @@ import { AccountService } from '@app/_services'; // Ensure this path matches you
     standalone: false
 })
 export class VerifyEmailComponent implements OnInit {
-    status = '';
-    loading = false;
+    status = 'Verifying your email, please wait...';
+    loading = true;
 
     constructor(
         private route: ActivatedRoute,
@@ -24,27 +25,33 @@ export class VerifyEmailComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        const token = this.route.snapshot.queryParams['token'];
+        // Use queryParamMap observable (not snapshot) to avoid race condition
+        // with APP_INITIALIZER refreshToken() call on first page load
+        this.route.queryParamMap.pipe(first()).subscribe(params => {
+            const token = params.get('token');
 
-        if (!token) {
-            this.status = 'Verification link is invalid or missing a token.';
-            return;
-        }
+            if (!token) {
+                this.loading = false;
+                this.status = 'Verification link is invalid or missing a token.';
+                return;
+            }
 
-        this.loading = true;
-        this.status = 'Verifying your email, please wait...';
-
-        this.accountService.verifyEmail(token)
-            .subscribe({
+            this.accountService.verifyEmail(token).subscribe({
                 next: () => {
                     this.loading = false;
                     this.status = 'Your email has been verified! You can now log in.';
                 },
                 error: (err) => {
                     this.loading = false;
-                    this.status = 'Verification failed. The link may be expired or already used.';
+                    // Token was already cleared in DB (already verified) - show friendly message
+                    if (err && (err.includes('already') || err.includes('invalid') || err.includes('Invalid'))) {
+                        this.status = 'Your email is already verified. You can log in.';
+                    } else {
+                        this.status = 'Verification failed. The link may be expired or already used.';
+                    }
                     console.error('Verification error:', err);
                 }
             });
+        });
     }
 }
