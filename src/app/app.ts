@@ -9,5 +9,5 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css'
 })
 export class AppComponent { // <--- Ensure 'export' is there!
-  title = 'Villegas_Lab7Activity';
+  title = 'Alber GWAPO';
 }
